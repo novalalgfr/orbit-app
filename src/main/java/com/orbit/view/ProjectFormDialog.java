@@ -1,5 +1,6 @@
 package com.orbit.view;
 
+import com.orbit.controller.ProjectController;
 import com.formdev.flatlaf.FlatClientProperties;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,9 +14,14 @@ public class ProjectFormDialog extends JDialog {
     private JTextField txtEndDate;
     private JButton btnSave;
     private JButton btnCancel;
+    
+    // Tambahkan Controller
+    private ProjectController controller;
 
     public ProjectFormDialog(Frame parent) {
         super(parent, "Create New Project", true);
+        this.controller = new ProjectController(); // Init Controller
+        
         setSize(450, 520); 
         setLocationRelativeTo(parent);
         setResizable(false);
@@ -76,17 +82,19 @@ public class ProjectFormDialog extends JDialog {
 
         JPanel pnlStart = new JPanel(new BorderLayout());
         pnlStart.setBackground(Color.WHITE);
-        pnlStart.add(createLabel("Start Date"), BorderLayout.NORTH);
+        pnlStart.add(createLabel("Start Date (YYYY-MM-DD)"), BorderLayout.NORTH);
         txtStartDate = new JTextField();
         txtStartDate.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
+        txtStartDate.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "2023-11-01");
         txtStartDate.setPreferredSize(new Dimension(0, 35));
         pnlStart.add(txtStartDate, BorderLayout.CENTER);
 
         JPanel pnlEnd = new JPanel(new BorderLayout());
         pnlEnd.setBackground(Color.WHITE);
-        pnlEnd.add(createLabel("End Date"), BorderLayout.NORTH);
+        pnlEnd.add(createLabel("End Date (YYYY-MM-DD)"), BorderLayout.NORTH);
         txtEndDate = new JTextField();
         txtEndDate.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
+        txtEndDate.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "2023-12-31");
         txtEndDate.setPreferredSize(new Dimension(0, 35));
         pnlEnd.add(txtEndDate, BorderLayout.CENTER);
 
@@ -112,9 +120,19 @@ public class ProjectFormDialog extends JDialog {
         btnSave.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
         btnSave.setPreferredSize(new Dimension(110, 32));
         
+        // --- LOGIC SAVE DATA ---
         btnSave.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Data Saved (Dummy)");
-            dispose();
+            String name = txtName.getText();
+            String desc = txtDescription.getText();
+            String start = txtStartDate.getText();
+            String end = txtEndDate.getText();
+
+            // Panggil Controller
+            boolean isSuccess = controller.addProject(name, desc, start, end);
+            
+            if (isSuccess) {
+                dispose(); // Tutup dialog jika sukses
+            }
         });
 
         buttonPanel.add(btnCancel);

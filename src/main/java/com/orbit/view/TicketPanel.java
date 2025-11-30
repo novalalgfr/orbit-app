@@ -1,25 +1,88 @@
 package com.orbit.view;
 
+import com.orbit.controller.TicketController;
+import com.orbit.controller.ProjectController;
+import com.orbit.model.Ticket;
+import com.orbit.model.Project;
+import com.formdev.flatlaf.FlatClientProperties;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import com.formdev.flatlaf.FlatClientProperties;
+import java.util.List;
 
 public class TicketPanel extends JPanel {
+
+    private JTable table;
+    private DefaultTableModel tableModel;
+    private JLabel lblProjectTitle;
+    private JLabel lblSubtitle;
+    
+    // Controller
+    private TicketController ticketController;
+    private ProjectController projectController;
+    
+    // Data Project yang sedang dibuka
+    private int currentProjectId = -1;
+    private String currentProjectName = "";
 
     // Callback untuk kembali ke halaman project
     private Runnable onBackAction;
 
     public TicketPanel(Runnable onBackAction) {
         this.onBackAction = onBackAction;
+        this.ticketController = new TicketController();
+        this.projectController = new ProjectController();
         
         setLayout(new BorderLayout());
         setBackground(new Color(245, 247, 250)); 
         setBorder(new EmptyBorder(30, 30, 30, 30)); 
 
         initComponents();
+    }
+
+    // Method ini akan dipanggil dari ProjectListPanel / MainFrame
+    public void loadData(int projectId) {
+        this.currentProjectId = projectId;
+        
+        // 1. Ambil Info Project (untuk Header)
+        // Kita perlu bikin method getProjectById di ProjectController dulu (nanti dicek)
+        // Sementara kita pakai logic simple atau asumsikan nama sudah dikirim
+        // Tapi idealnya ambil fresh dari DB:
+        try {
+            // Asumsi: Kita tambahkan method getProjectById di Controller nanti
+            // Kalau belum ada, ProjectController perlu update sedikit.
+            // Untuk sekarang kita ambil tiketnya dulu.
+            List<Ticket> tickets = ticketController.getTicketsByProject(projectId);
+            
+            // Update Header (Placeholder logic, nanti diperbaiki jika ProjectController sudah ada getById)
+            lblProjectTitle.setText("Project ID #" + projectId); 
+            lblSubtitle.setText("Total Tickets: " + tickets.size());
+            
+            // 2. Update Tabel
+            tableModel.setRowCount(0);
+            for (Ticket t : tickets) {
+                Object[] row = {
+                    t.getId(),
+                    t.getTitle(),
+                    (t.getAssignee() != null) ? t.getAssignee().getFullName() : "Unassigned",
+                    t.getPriority(),
+                    t.getStatus()
+                };
+                tableModel.addRow(row);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // Versi lebih lengkap jika ProjectController sudah support getById
+    public void setProjectHeader(String name) {
+        this.currentProjectName = name;
+        lblProjectTitle.setText(name);
     }
 
     private void initComponents() {
@@ -45,18 +108,18 @@ public class TicketPanel extends JPanel {
 
         JPanel textPanel = new JPanel(new GridLayout(2, 1));
         textPanel.setOpaque(false);
-        textPanel.setBorder(new EmptyBorder(0, 15, 0, 0)); // Jarak dari tombol back
+        textPanel.setBorder(new EmptyBorder(0, 15, 0, 0)); 
 
-        JLabel title = new JLabel("Aplikasi E-Commerce"); // Nanti ini dinamis
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        title.setForeground(new Color(33, 33, 33));
+        lblProjectTitle = new JLabel("Loading Project..."); 
+        lblProjectTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblProjectTitle.setForeground(new Color(33, 33, 33));
         
-        JLabel subtitle = new JLabel("Project ID: #1 • Tickets Overview");
-        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        subtitle.setForeground(Color.GRAY);
+        lblSubtitle = new JLabel("Tickets Overview");
+        lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblSubtitle.setForeground(Color.GRAY);
         
-        textPanel.add(title);
-        textPanel.add(subtitle);
+        textPanel.add(lblProjectTitle);
+        textPanel.add(lblSubtitle);
 
         leftContainer.add(btnBack);
         leftContainer.add(textPanel);
@@ -72,8 +135,17 @@ public class TicketPanel extends JPanel {
         btnAdd.setPreferredSize(new Dimension(130, 32)); 
 
         btnAdd.addActionListener(e -> {
+            if (currentProjectId == -1) {
+                JOptionPane.showMessageDialog(this, "No project selected!");
+                return;
+            }
             JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            new TicketFormDialog(parentFrame).setVisible(true);
+            // Kita kirim ID Project ke Form Dialog
+            TicketFormDialog dialog = new TicketFormDialog(parentFrame, currentProjectId);
+            dialog.setVisible(true);
+            
+            // Refresh tabel setelah dialog tutup
+            loadData(currentProjectId);
         });
 
         headerPanel.add(leftContainer, BorderLayout.WEST);
@@ -92,46 +164,35 @@ public class TicketPanel extends JPanel {
         panel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
         String[] columns = {"ID", "Ticket Title", "Assignee", "Priority", "Status"};
-        Object[][] data = {
-            {"101", "Design Database Schema", "Budi Santoso", "HIGH", "DONE"},
-            {"102", "Setup Spring Boot", "Siti Aminah", "MEDIUM", "IN_PROGRESS"},
-            {"103", "Create Login Page", "Budi Santoso", "LOW", "TODO"},
-        };
-
-        DefaultTableModel model = new DefaultTableModel(data, columns) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; 
-            }
-        };
-
-        JTable table = new JTable(model);
-        table.setRowHeight(40); 
         
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        table = new JTable(tableModel);
+        table.setRowHeight(40); 
         table.setShowVerticalLines(true);
         table.setShowHorizontalLines(true);
         table.setGridColor(new Color(220, 220, 220));
-        table.setIntercellSpacing(new Dimension(0, 1));
-        
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         table.getTableHeader().setBackground(new Color(248, 249, 250));
         table.getTableHeader().setForeground(new Color(100, 100, 100));
         table.getTableHeader().setPreferredSize(new Dimension(0, 35));
 
         // Atur Lebar Kolom
-        table.getColumnModel().getColumn(0).setPreferredWidth(60); // ID
+        table.getColumnModel().getColumn(0).setPreferredWidth(60); 
         table.getColumnModel().getColumn(0).setMaxWidth(80);
-        table.getColumnModel().getColumn(1).setPreferredWidth(300); // Title
-        table.getColumnModel().getColumn(2).setPreferredWidth(150); // Assignee
-        table.getColumnModel().getColumn(3).setPreferredWidth(100); // Priority
-        table.getColumnModel().getColumn(4).setPreferredWidth(100); // Status
+        table.getColumnModel().getColumn(1).setPreferredWidth(300); 
+        table.getColumnModel().getColumn(2).setPreferredWidth(150); 
+        table.getColumnModel().getColumn(3).setPreferredWidth(100); 
+        table.getColumnModel().getColumn(4).setPreferredWidth(100); 
 
-        // Center Alignment
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Priority
-        table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Status
+        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); 
+        table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); 
         
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());

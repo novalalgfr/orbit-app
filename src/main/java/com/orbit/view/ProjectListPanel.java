@@ -2,6 +2,7 @@ package com.orbit.view;
 
 import com.orbit.controller.ProjectController;
 import com.orbit.model.Project;
+import com.orbit.service.AuthService; // <--- JANGAN LUPA IMPORT INI
 import com.formdev.flatlaf.FlatClientProperties;
 
 import javax.swing.*;
@@ -9,12 +10,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 
 public class ProjectListPanel extends JPanel {
-
+    
+    // ... variable deklarasi (table, model, controller) tetep sama ...
     private JTable table;
     private DefaultTableModel tableModel;
     private ProjectController controller;
@@ -30,34 +32,22 @@ public class ProjectListPanel extends JPanel {
         loadData();
     }
 
+    // ... method loadData() tetep sama ...
     private void loadData() {
-        // Kosongkan tabel dulu
         tableModel.setRowCount(0);
-
-        // Ambil data dari database via Controller
         List<Project> projects = controller.getAllProjects();
-
-        // Ambil tanggal hari ini
         LocalDate today = LocalDate.now();
 
-        // Masukkan ke tabel
         for (Project p : projects) {
-            String status = "Active"; // Default status
-
-            // Logika Cek Tanggal
+            String status = "Active";
             try {
-                // Konversi String tanggal dari database ke LocalDate
                 if (p.getEndDate() != null && !p.getEndDate().isEmpty()) {
-                    LocalDate endDate = LocalDate.parse(p.getEndDate()); // Format harus YYYY-MM-DD
-                    
+                    LocalDate endDate = LocalDate.parse(p.getEndDate());
                     if (endDate.isBefore(today)) {
                         status = "Completed";
                     }
                 }
-            } catch (DateTimeParseException e) {
-                // Jika format tanggal salah, biarkan default "Active"
-                System.err.println("Error parsing date for project: " + p.getProjectName());
-            }
+            } catch (DateTimeParseException e) { }
 
             Object[] row = {
                 p.getId(),
@@ -65,7 +55,7 @@ public class ProjectListPanel extends JPanel {
                 p.getDescription(),
                 p.getStartDate(),
                 p.getEndDate(),
-                status // Status sekarang dinamis berdasarkan tanggal!
+                status
             };
             tableModel.addRow(row);
         }
@@ -76,6 +66,7 @@ public class ProjectListPanel extends JPanel {
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); 
 
+        // BAGIAN JUDUL (KIRI) - Tetap Sama
         JPanel textPanel = new JPanel(new GridLayout(2, 1));
         textPanel.setOpaque(false);
         JLabel title = new JLabel("All Projects");
@@ -85,13 +76,14 @@ public class ProjectListPanel extends JPanel {
         JLabel subtitle = new JLabel("Manage your projects");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         subtitle.setForeground(Color.GRAY);
-        
         textPanel.add(title);
         textPanel.add(subtitle);
 
+        // BAGIAN TOMBOL (KANAN)
         JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonContainer.setOpaque(false);
 
+        // 1. Tombol OPEN (Tetap Sama - Semua orang boleh buka project)
         JButton btnOpen = new JButton("Open Project");
         btnOpen.setBackground(Color.WHITE);
         btnOpen.setForeground(new Color(50, 50, 50));
@@ -106,50 +98,73 @@ public class ProjectListPanel extends JPanel {
             if (selectedRow == -1) {
                 JOptionPane.showMessageDialog(this, "Please select a project first!", "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
+                // 1. Ambil ID dan Nama Project dari Tabel
                 int projectId = (int) table.getValueAt(selectedRow, 0);
-                String projectName = (String) table.getValueAt(selectedRow, 1);
+                String projectName = (String) table.getValueAt(selectedRow, 1); 
                 
+                // 2. Cari Parent Container (ContentPanel di MainFrame)
                 Container parent = SwingUtilities.getAncestorOfClass(JPanel.class, this);
+                
                 if (parent != null) {
+                    // 3. Cari TicketPanel di dalam daftar komponen parent
+                    // Kita harus looping mencari komponen mana yang merupakan TicketPanel
+                    for (Component comp : parent.getComponents()) {
+                        if (comp instanceof TicketPanel) {
+                            TicketPanel ticketPanel = (TicketPanel) comp;
+                            
+                            // Kirim Nama Project untuk Judul Header
+                            ticketPanel.setProjectHeader(projectName);
+                            
+                            // Kirim ID Project untuk ambil data tiket dari DB
+                            ticketPanel.loadData(projectId);
+                            
+                            break; // Stop looping kalau sudah ketemu
+                        }
+                    }
+
+                    // 4. Pindah Layar ke TICKETS
                     CardLayout cl = (CardLayout) parent.getLayout();
                     cl.show(parent, "TICKETS");
-                    
-                    System.out.println("Opening Project ID: " + projectId);
                 }
             }
         });
 
-        JButton btnAdd = new JButton("+ New Project");
-        btnAdd.setBackground(new Color(79, 70, 229)); 
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnAdd.setFocusPainted(false);
-        btnAdd.putClientProperty(FlatClientProperties.STYLE, "arc: 10"); 
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAdd.setPreferredSize(new Dimension(130, 32)); 
-
-        btnAdd.addActionListener(e -> {
-            JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            ProjectFormDialog dialog = new ProjectFormDialog(parentFrame);
-            dialog.setVisible(true); // Program berhenti disini sampai dialog ditutup
-            
-            // Setelah dialog ditutup, refresh tabel!
-            loadData();
-        });
-
         buttonContainer.add(btnOpen);
-        buttonContainer.add(btnAdd);
+
+        // 2. Tombol NEW PROJECT (HANYA ADMIN) 🔒
+        // Kita cek: Apakah user yang login adalah ADMIN?
+        if (AuthService.isAdmin()) {
+            JButton btnAdd = new JButton("+ New Project");
+            btnAdd.setBackground(new Color(79, 70, 229)); 
+            btnAdd.setForeground(Color.WHITE);
+            btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnAdd.setFocusPainted(false);
+            btnAdd.putClientProperty(FlatClientProperties.STYLE, "arc: 10"); 
+            btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnAdd.setPreferredSize(new Dimension(130, 32)); 
+
+            btnAdd.addActionListener(e -> {
+                JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                ProjectFormDialog dialog = new ProjectFormDialog(parentFrame);
+                dialog.setVisible(true); 
+                loadData();
+            });
+            
+            // Masukkan tombol Add HANYA jika Admin
+            buttonContainer.add(btnAdd);
+        }
 
         headerPanel.add(textPanel, BorderLayout.WEST);
         headerPanel.add(buttonContainer, BorderLayout.EAST);
 
-        // BAGIAN TABEL
+        // BAGIAN TABEL - Tetap Sama
         JPanel tableContainer = createProjectTable();
 
         add(headerPanel, BorderLayout.NORTH);
         add(tableContainer, BorderLayout.CENTER);
     }
 
+    // ... method createProjectTable() tetep sama ...
     private JPanel createProjectTable() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -158,21 +173,16 @@ public class ProjectListPanel extends JPanel {
 
         String[] columns = {"ID", "Project Name", "Description", "Start Date", "End Date", "Status"};
         
-        // Inisialisasi Model Kosong (Data diisi via loadData)
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; 
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
 
         table = new JTable(tableModel);
         table.setRowHeight(40); 
-        
         table.setShowVerticalLines(true);
         table.setShowHorizontalLines(true);
         table.setGridColor(new Color(220, 220, 220));
-        
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         table.getTableHeader().setBackground(new Color(248, 249, 250));
         table.getTableHeader().setForeground(new Color(100, 100, 100));

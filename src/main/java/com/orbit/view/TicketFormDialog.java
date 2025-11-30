@@ -1,21 +1,35 @@
 package com.orbit.view;
 
+import com.orbit.controller.TicketController;
+import com.orbit.dao.UserDao;
+import com.orbit.model.User;
 import com.formdev.flatlaf.FlatClientProperties;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.List;
 
 public class TicketFormDialog extends JDialog {
 
     private JTextField txtTitle;
     private JComboBox<String> cmbPriority;
     private JComboBox<String> cmbStatus;
-    private JComboBox<String> cmbAssignee;
+    private JComboBox<User> cmbAssignee; // Ganti jadi Object User
     private JButton btnSave;
     private JButton btnCancel;
+    
+    private TicketController controller;
+    private UserDao userDao; // Butuh ini untuk isi dropdown user
+    private int projectId;   // ID Project tempat tiket ini dibuat
 
-    public TicketFormDialog(Frame parent) {
+    // Constructor menerima projectId
+    public TicketFormDialog(Frame parent, int projectId) {
         super(parent, "Create New Ticket", true);
+        this.projectId = projectId;
+        this.controller = new TicketController();
+        this.userDao = new UserDao();
+        
         setSize(450, 480); 
         setLocationRelativeTo(parent);
         setResizable(false);
@@ -23,6 +37,14 @@ public class TicketFormDialog extends JDialog {
         setBackground(Color.WHITE);
 
         initComponents();
+        loadUsers(); // Isi dropdown user saat dialog dibuka
+    }
+
+    private void loadUsers() {
+        List<User> users = userDao.findAll();
+        for (User u : users) {
+            cmbAssignee.addItem(u); // User.toString() akan menampilkan Full Name
+        }
     }
 
     private void initComponents() {
@@ -88,7 +110,7 @@ public class TicketFormDialog extends JDialog {
 
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 0, 0, 0);
-        cmbAssignee = new JComboBox<>(new String[]{"Budi Santoso", "Siti Aminah", "Unassigned"});
+        cmbAssignee = new JComboBox<>(); // Kosong dulu, diisi loadUsers()
         cmbAssignee.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
         cmbAssignee.setPreferredSize(new Dimension(0, 35));
         formPanel.add(cmbAssignee, gbc);
@@ -112,9 +134,19 @@ public class TicketFormDialog extends JDialog {
         btnSave.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
         btnSave.setPreferredSize(new Dimension(110, 32));
         
+        // --- LOGIC SAVE TICKET ---
         btnSave.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Ticket Created (Dummy)");
-            dispose();
+            String title = txtTitle.getText();
+            String priority = (String) cmbPriority.getSelectedItem();
+            String status = (String) cmbStatus.getSelectedItem();
+            
+            // Ambil User yang dipilih
+            User selectedUser = (User) cmbAssignee.getSelectedItem();
+            String assigneeUsername = (selectedUser != null) ? selectedUser.getUsername() : null;
+
+            if (controller.addTicket(title, priority, status, projectId, assigneeUsername)) {
+                dispose(); // Tutup jika sukses
+            }
         });
 
         buttonPanel.add(btnCancel);

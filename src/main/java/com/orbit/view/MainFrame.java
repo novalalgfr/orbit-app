@@ -1,5 +1,6 @@
 package com.orbit.view;
 
+import com.orbit.service.AuthService; 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -40,12 +41,9 @@ public class MainFrame extends JFrame {
         contentPanel.setBackground(COLOR_BG);
 
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
-        
         contentPanel.add(new ProjectListPanel(), "PROJECTS");
-        
         contentPanel.add(new UserListPanel(), "USERS");
-
-		contentPanel.add(new TicketPanel(() -> showView("PROJECTS")), "TICKETS");
+        contentPanel.add(new TicketPanel(() -> showView("PROJECTS")), "TICKETS");
 
         add(sidebarPanel, BorderLayout.WEST);
         add(contentPanel, BorderLayout.CENTER);
@@ -73,7 +71,16 @@ public class MainFrame extends JFrame {
         JButton btnUser = createMenuButton("Team Members", e -> showView("USERS"));
         
         JButton btnLogout = createMenuButton("Logout", e -> {
-            JOptionPane.showMessageDialog(this, "Logout clicked");
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Are you sure you want to logout?", 
+                "Confirm Logout", 
+                JOptionPane.YES_NO_OPTION);
+                
+            if (confirm == JOptionPane.YES_OPTION) {
+                new AuthService().logout();
+                new LoginFrame().setVisible(true);
+                dispose();
+            }
         });
         btnLogout.setForeground(new Color(255, 82, 82)); 
 
