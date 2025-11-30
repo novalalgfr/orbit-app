@@ -29,48 +29,75 @@ public class DashboardController {
         return (list != null) ? list.size() : 0;
     }
 
-    public int getMyTasksCount() {
-        User currentUser = AuthService.getCurrentUser();
-        if (currentUser == null) return 0;
-
-        List<Ticket> allTickets = ticketService.getAllTickets();
-        if (allTickets == null) return 0;
-
-        long count = allTickets.stream()
-                .filter(t -> t.getAssignee() != null && t.getAssignee().getId() == currentUser.getId())
-                .filter(t -> !t.getStatus().equals("DONE"))
-                .count();
-        
-        return (int) count;
-    }
-
     public int getPendingTasksCount() {
+        User currentUser = AuthService.getCurrentUser();
         List<Ticket> allTickets = ticketService.getAllTickets();
-        if (allTickets == null) return 0;
+        if (allTickets == null || currentUser == null) return 0;
 
-        long count = allTickets.stream()
+        if ("ADMIN".equals(currentUser.getRole())) {
+            return (int) allTickets.stream()
+                    .filter(t -> t.getStatus().equals("TODO"))
+                    .count();
+        }
+
+        return (int) allTickets.stream()
+                .filter(t -> t.getAssignee() != null && t.getAssignee().getId() == currentUser.getId())
                 .filter(t -> t.getStatus().equals("TODO"))
                 .count();
-        return (int) count;
+    }
+
+	public int getMyTasksCount() {
+        User currentUser = AuthService.getCurrentUser();
+        List<Ticket> allTickets = ticketService.getAllTickets();
+        if (allTickets == null || currentUser == null) return 0;
+
+        if ("ADMIN".equals(currentUser.getRole())) {
+            return (int) allTickets.stream()
+                    .filter(t -> t.getStatus().equals("IN_PROGRESS"))
+                    .count();
+        } 
+        
+        return (int) allTickets.stream()
+                .filter(t -> t.getAssignee() != null && t.getAssignee().getId() == currentUser.getId())
+                .filter(t -> t.getStatus().equals("IN_PROGRESS"))
+                .count();
     }
 
     public int getCompletedTasksCount() {
+        User currentUser = AuthService.getCurrentUser();
         List<Ticket> allTickets = ticketService.getAllTickets();
-        if (allTickets == null) return 0;
+        if (allTickets == null || currentUser == null) return 0;
 
-        long count = allTickets.stream()
+        if ("ADMIN".equals(currentUser.getRole())) {
+            return (int) allTickets.stream()
+                    .filter(t -> t.getStatus().equals("DONE"))
+                    .count();
+        }
+
+        return (int) allTickets.stream()
+                .filter(t -> t.getAssignee() != null && t.getAssignee().getId() == currentUser.getId())
                 .filter(t -> t.getStatus().equals("DONE"))
                 .count();
-        return (int) count;
     }
 
     public List<Ticket> getRecentActivities() {
+        User currentUser = AuthService.getCurrentUser();
+        
         List<Ticket> all = ticketService.getAllTickets();
-        if (all == null || all.isEmpty()) return List.of();
-
-        return all.stream()
-                .sorted((t1, t2) -> Integer.compare(t2.getId(), t1.getId()))
-                .limit(5)
-                .collect(Collectors.toList());
+        if (all == null || all.isEmpty() || currentUser == null) return List.of();
+        
+        if ("ADMIN".equals(currentUser.getRole())) {
+            return all.stream()
+                    .sorted((t1, t2) -> Integer.compare(t2.getId(), t1.getId()))
+                    .limit(15)
+                    .collect(Collectors.toList());
+        } else {
+            return all.stream()
+                    .filter(t -> t.getAssignee() != null && t.getAssignee().getId() == currentUser.getId())
+                    // .filter(t -> !t.getStatus().equals("DONE")) 
+                    .sorted((t1, t2) -> Integer.compare(t2.getId(), t1.getId()))
+                    .limit(15)
+                    .collect(Collectors.toList());
+        }
     }
 }

@@ -184,7 +184,7 @@ public class TicketPanel extends JPanel {
         panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
         panel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        String[] columns = {"ID", "Ticket Title", "Description", "Assignee", "Priority", "Status"};
+        String[] columns = {"No", "Ticket Title", "Description", "Assignee", "Priority", "Status"};
         
         tableModel = new DefaultTableModel(columns, 0) {
             @Override

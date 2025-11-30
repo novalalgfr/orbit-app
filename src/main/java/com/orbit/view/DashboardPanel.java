@@ -44,13 +44,13 @@ public class DashboardPanel extends JPanel {
         statsContainer.setPreferredSize(new Dimension(0, 140));
 
         String totalProj = String.valueOf(controller.getTotalProjects());
-        String myTasks = String.valueOf(controller.getMyTasksCount());
         String pending = String.valueOf(controller.getPendingTasksCount());
+        String myTasks = String.valueOf(controller.getMyTasksCount());
         String completed = String.valueOf(controller.getCompletedTasksCount());
 
         statsContainer.add(createCard("Total Projects", totalProj, new Color(79, 70, 229)));
-        statsContainer.add(createCard("My Active Tasks", myTasks, new Color(16, 185, 129)));
         statsContainer.add(createCard("Todo / Pending", pending, new Color(245, 158, 11)));
+        statsContainer.add(createCard("My Active Tasks", myTasks, new Color(16, 185, 129)));
         statsContainer.add(createCard("Completed", completed, new Color(99, 102, 241)));
 
         JPanel tablePanel = createRecentTable();
@@ -105,14 +105,17 @@ public class DashboardPanel extends JPanel {
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
 
-        String[] cols = {"ID", "Task Name", "Project", "Status", "Assignee"};
+        String[] cols = {"No", "Task Name", "Project", "Status", "Assignee"};
         
         List<Ticket> recentTickets = controller.getRecentActivities();
         Object[][] rows = new Object[recentTickets.size()][5];
 
         for (int i = 0; i < recentTickets.size(); i++) {
             Ticket t = recentTickets.get(i);
-            rows[i][0] = "#" + t.getId();
+            
+            // PERUBAHAN 2: Isi kolom pertama dengan nomor urut (i + 1)
+            rows[i][0] = i + 1; 
+            
             rows[i][1] = t.getTitle();
             rows[i][2] = (t.getProject() != null) ? t.getProject().getProjectName() : "-";
             rows[i][3] = t.getStatus();
@@ -139,8 +142,10 @@ public class DashboardPanel extends JPanel {
         table.getTableHeader().setForeground(new Color(100, 100, 100));
         table.getTableHeader().setPreferredSize(new Dimension(0, 35));
         
-        table.getColumnModel().getColumn(0).setPreferredWidth(60);
-        table.getColumnModel().getColumn(0).setMaxWidth(80);
+        // Lebar kolom No dikecilkan sedikit
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);
+        table.getColumnModel().getColumn(0).setMaxWidth(60);
+        
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
         table.getColumnModel().getColumn(2).setPreferredWidth(150);
         

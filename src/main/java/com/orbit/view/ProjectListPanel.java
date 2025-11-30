@@ -185,7 +185,7 @@ public class ProjectListPanel extends JPanel {
         panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
         panel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        String[] columns = {"ID", "Project Name", "Description", "Start Date", "End Date", "Status"};
+        String[] columns = {"No", "Project Name", "Description", "Start Date", "End Date", "Status"};
         
         tableModel = new DefaultTableModel(columns, 0) {
             @Override

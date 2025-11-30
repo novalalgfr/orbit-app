@@ -160,7 +160,7 @@ public class UserListPanel extends JPanel {
         panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
         panel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        String[] columns = {"ID", "Full Name", "Username", "Role"};
+        String[] columns = {"No", "Full Name", "Username", "Role"};
         
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
