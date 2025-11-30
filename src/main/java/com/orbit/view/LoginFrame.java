@@ -1,6 +1,8 @@
 package com.orbit.view;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.orbit.controller.LoginController; 
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -10,8 +12,11 @@ public class LoginFrame extends JFrame {
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JButton btnLogin;
+    
+    private LoginController controller;
 
     public LoginFrame() {
+        this.controller = new LoginController();
         initWindow();
         initComponents();
     }
@@ -19,13 +24,11 @@ public class LoginFrame extends JFrame {
     private void initWindow() {
         setTitle("Login - Orbit App");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setSize(1280, 720);
+        setSize(1280, 720); 
         setLocationRelativeTo(null);
-        
         getContentPane().setBackground(new Color(245, 247, 250));
-        setLayout(new GridBagLayout());
+        setLayout(new GridBagLayout()); 
     }
 
     private void initComponents() {
@@ -41,6 +44,7 @@ public class LoginFrame extends JFrame {
             new EmptyBorder(40, 40, 50, 40)
         ));
 
+        // 1. Logo Section
         JLabel lblLogo = new JLabel("ORBIT");
         lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 32));
         lblLogo.setForeground(new Color(30, 30, 46));
@@ -51,6 +55,7 @@ public class LoginFrame extends JFrame {
         lblSubtitle.setForeground(Color.GRAY);
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // 2. Form Section
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
         formPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
@@ -62,6 +67,7 @@ public class LoginFrame extends JFrame {
         gbc.weightx = 1.0;
         gbc.gridx = 0;
 
+        // Username
         gbc.gridy = 0;
         formPanel.add(createLabel("Username"), gbc);
         
@@ -73,6 +79,7 @@ public class LoginFrame extends JFrame {
         txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username");
         formPanel.add(txtUsername, gbc);
 
+        // Password
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 10, 0);
         formPanel.add(createLabel("Password"), gbc);
@@ -85,6 +92,7 @@ public class LoginFrame extends JFrame {
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password");
         formPanel.add(txtPassword, gbc);
 
+        // 3. Button Section
         btnLogin = new JButton("Sign In");
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLogin.setBackground(new Color(79, 70, 229));
@@ -94,11 +102,15 @@ public class LoginFrame extends JFrame {
         btnLogin.putClientProperty(FlatClientProperties.STYLE, "arc: 10");
         btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
-		btnLogin.setPreferredSize(new Dimension(130, 32)); 
 
         btnLogin.addActionListener(e -> {
-            this.dispose(); 
-            new MainFrame().setVisible(true);
+            String username = txtUsername.getText();
+            String password = new String(txtPassword.getPassword());
+
+            if (controller.handleLogin(username, password)) {
+                new MainFrame().setVisible(true);
+                this.dispose();
+            }
         });
 
         loginCard.add(Box.createVerticalGlue());

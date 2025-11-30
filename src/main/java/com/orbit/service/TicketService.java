@@ -20,6 +20,10 @@ public class TicketService {
         this.userDao = new UserDao();
     }
 
+	public List<Ticket> getAllTickets() {
+        return ticketDao.findAll();
+    }
+
     public List<Ticket> getTicketsByProject(int projectId) {
         return ticketDao.findByProjectId(projectId);
     }

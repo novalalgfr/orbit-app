@@ -1,16 +1,22 @@
 package com.orbit.view;
 
+import com.orbit.controller.DashboardController;
+import com.orbit.model.Ticket;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-
 import java.awt.*;
+import java.util.List;
 import com.formdev.flatlaf.FlatClientProperties;
 
 public class DashboardPanel extends JPanel {
 
+    private DashboardController controller;
+
     public DashboardPanel() {
+        this.controller = new DashboardController(); // Init Controller
+        
         setLayout(new BorderLayout());
         setBackground(new Color(245, 247, 250)); 
         setBorder(new EmptyBorder(40, 40, 40, 40)); 
@@ -26,7 +32,8 @@ public class DashboardPanel extends JPanel {
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
         title.setForeground(new Color(33, 33, 33));
         
-        JLabel subtitle = new JLabel("Welcome back, Admin!");
+        // Ambil nama user yang login
+        JLabel subtitle = new JLabel("Welcome back, " + controller.getGreetingName() + "!");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitle.setForeground(Color.GRAY);
         
@@ -37,10 +44,16 @@ public class DashboardPanel extends JPanel {
         statsContainer.setOpaque(false);
         statsContainer.setPreferredSize(new Dimension(0, 140));
 
-        statsContainer.add(createCard("Total Projects", "5", "active", new Color(79, 70, 229)));
-        statsContainer.add(createCard("My Tasks", "12", "assigned", new Color(16, 185, 129)));
-        statsContainer.add(createCard("Pending", "8", "urgent", new Color(245, 158, 11)));
-        statsContainer.add(createCard("Completed", "104", "archived", new Color(99, 102, 241)));
+        // Ambil data statistik dari Controller
+        String totalProj = String.valueOf(controller.getTotalProjects());
+        String myTasks = String.valueOf(controller.getMyTasksCount());
+        String pending = String.valueOf(controller.getPendingTasksCount());
+        String completed = String.valueOf(controller.getCompletedTasksCount());
+
+        statsContainer.add(createCard("Total Projects", totalProj, new Color(79, 70, 229)));
+        statsContainer.add(createCard("My Active Tasks", myTasks, new Color(16, 185, 129)));
+        statsContainer.add(createCard("Todo / Pending", pending, new Color(245, 158, 11)));
+        statsContainer.add(createCard("Completed", completed, new Color(99, 102, 241)));
 
         JPanel tablePanel = createRecentTable();
 
@@ -54,7 +67,7 @@ public class DashboardPanel extends JPanel {
         add(tablePanel, BorderLayout.CENTER);
     }
 
-    private JPanel createCard(String title, String value, String sub, Color accent) {
+    private JPanel createCard(String title, String value, Color accent) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.putClientProperty(FlatClientProperties.STYLE, "arc: 20"); 
@@ -90,17 +103,24 @@ public class DashboardPanel extends JPanel {
         panel.putClientProperty(FlatClientProperties.STYLE, "arc: 20");
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
         
-        JLabel lblTitle = new JLabel("Recent Activities");
+        JLabel lblTitle = new JLabel("Recent Activities (Latest Tickets)");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
 
         String[] cols = {"ID", "Task Name", "Project", "Status", "Assignee"};
-        Object[][] rows = {
-            {"#101", "Design Login Page", "E-Commerce", "DONE", "Budi"},
-            {"#102", "Setup Database", "E-Commerce", "DONE", "Siti"},
-            {"#103", "Fix CSS Sidebar", "Orbit App", "IN_PROGRESS", "Admin"},
-            {"#104", "Create Unit Test", "Orbit App", "TODO", "Admin"},
-        };
+        
+        // Ambil Data Tiket Terbaru dari Controller
+        List<Ticket> recentTickets = controller.getRecentActivities();
+        Object[][] rows = new Object[recentTickets.size()][5];
+
+        for (int i = 0; i < recentTickets.size(); i++) {
+            Ticket t = recentTickets.get(i);
+            rows[i][0] = "#" + t.getId();
+            rows[i][1] = t.getTitle();
+            rows[i][2] = (t.getProject() != null) ? t.getProject().getProjectName() : "-";
+            rows[i][3] = t.getStatus();
+            rows[i][4] = (t.getAssignee() != null) ? t.getAssignee().getFullName() : "Unassigned";
+        }
 
         DefaultTableModel model = new DefaultTableModel(rows, cols) {
             @Override
