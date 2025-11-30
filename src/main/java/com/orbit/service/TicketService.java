@@ -20,7 +20,7 @@ public class TicketService {
         this.userDao = new UserDao();
     }
 
-	public List<Ticket> getAllTickets() {
+    public List<Ticket> getAllTickets() {
         return ticketDao.findAll();
     }
 
@@ -28,12 +28,12 @@ public class TicketService {
         return ticketDao.findByProjectId(projectId);
     }
 
-    public void createTicket(String title, String priority, String status, int projectId, String assigneeName) {
+    public void createTicket(String title, String description, String priority, String status, int projectId, String assigneeName) {
         Project project = projectDao.findById(projectId);
         User assignee = userDao.findByUsername(assigneeName); 
 
         if (project != null) {
-            Ticket ticket = new Ticket(title, priority, status, project, assignee);
+            Ticket ticket = new Ticket(title, description, priority, status, project, assignee);
             ticketDao.save(ticket);
         }
     }

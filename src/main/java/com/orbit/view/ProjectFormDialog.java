@@ -15,13 +15,33 @@ public class ProjectFormDialog extends JDialog {
     private JButton btnSave;
     private JButton btnCancel;
     
-    // Tambahkan Controller
     private ProjectController controller;
+    
+    private int projectIdToEdit = -1; 
+    private boolean isEditMode = false;
 
     public ProjectFormDialog(Frame parent) {
         super(parent, "Create New Project", true);
-        this.controller = new ProjectController(); // Init Controller
+        this.controller = new ProjectController();
+        initUI(parent);
+    }
+
+    public ProjectFormDialog(Frame parent, int id, String name, String desc, String start, String end) {
+        super(parent, "Edit Project", true);
+        this.controller = new ProjectController();
+        this.projectIdToEdit = id;
+        this.isEditMode = true;
         
+        initUI(parent);
+        
+        txtName.setText(name);
+        txtDescription.setText(desc);
+        txtStartDate.setText(start);
+        txtEndDate.setText(end);
+        btnSave.setText("Update Project");
+    }
+
+    private void initUI(Frame parent) {
         setSize(450, 520); 
         setLocationRelativeTo(parent);
         setResizable(false);
@@ -36,7 +56,7 @@ public class ProjectFormDialog extends JDialog {
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new EmptyBorder(20, 25, 10, 25));
         
-        JLabel lblTitle = new JLabel("New Project");
+        JLabel lblTitle = new JLabel(isEditMode ? "Edit Project" : "New Project");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
@@ -85,7 +105,6 @@ public class ProjectFormDialog extends JDialog {
         pnlStart.add(createLabel("Start Date (YYYY-MM-DD)"), BorderLayout.NORTH);
         txtStartDate = new JTextField();
         txtStartDate.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
-        txtStartDate.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "2023-11-01");
         txtStartDate.setPreferredSize(new Dimension(0, 35));
         pnlStart.add(txtStartDate, BorderLayout.CENTER);
 
@@ -94,7 +113,6 @@ public class ProjectFormDialog extends JDialog {
         pnlEnd.add(createLabel("End Date (YYYY-MM-DD)"), BorderLayout.NORTH);
         txtEndDate = new JTextField();
         txtEndDate.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
-        txtEndDate.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "2023-12-31");
         txtEndDate.setPreferredSize(new Dimension(0, 35));
         pnlEnd.add(txtEndDate, BorderLayout.CENTER);
 
@@ -120,19 +138,20 @@ public class ProjectFormDialog extends JDialog {
         btnSave.putClientProperty(FlatClientProperties.STYLE, "arc: 8");
         btnSave.setPreferredSize(new Dimension(110, 32));
         
-        // --- LOGIC SAVE DATA ---
         btnSave.addActionListener(e -> {
             String name = txtName.getText();
             String desc = txtDescription.getText();
             String start = txtStartDate.getText();
             String end = txtEndDate.getText();
-
-            // Panggil Controller
-            boolean isSuccess = controller.addProject(name, desc, start, end);
             
-            if (isSuccess) {
-                dispose(); // Tutup dialog jika sukses
+            boolean success;
+            if (isEditMode) {
+                success = controller.updateProject(projectIdToEdit, name, desc, start, end);
+            } else {
+                success = controller.addProject(name, desc, start, end);
             }
+            
+            if (success) dispose();
         });
 
         buttonPanel.add(btnCancel);

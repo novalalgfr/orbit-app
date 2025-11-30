@@ -44,7 +44,6 @@ public class LoginFrame extends JFrame {
             new EmptyBorder(40, 40, 50, 40)
         ));
 
-        // 1. Logo Section
         JLabel lblLogo = new JLabel("ORBIT");
         lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 32));
         lblLogo.setForeground(new Color(30, 30, 46));
@@ -55,7 +54,6 @@ public class LoginFrame extends JFrame {
         lblSubtitle.setForeground(Color.GRAY);
         lblSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 2. Form Section
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
         formPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
@@ -67,7 +65,6 @@ public class LoginFrame extends JFrame {
         gbc.weightx = 1.0;
         gbc.gridx = 0;
 
-        // Username
         gbc.gridy = 0;
         formPanel.add(createLabel("Username"), gbc);
         
@@ -79,7 +76,6 @@ public class LoginFrame extends JFrame {
         txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username");
         formPanel.add(txtUsername, gbc);
 
-        // Password
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 10, 0);
         formPanel.add(createLabel("Password"), gbc);
@@ -92,7 +88,6 @@ public class LoginFrame extends JFrame {
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password");
         formPanel.add(txtPassword, gbc);
 
-        // 3. Button Section
         btnLogin = new JButton("Sign In");
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLogin.setBackground(new Color(79, 70, 229));

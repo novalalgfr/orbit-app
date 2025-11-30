@@ -3,7 +3,6 @@ package com.orbit.view;
 import com.orbit.controller.TicketController;
 import com.orbit.controller.ProjectController;
 import com.orbit.model.Ticket;
-import com.orbit.model.Project;
 import com.formdev.flatlaf.FlatClientProperties;
 
 import javax.swing.*;
@@ -20,15 +19,12 @@ public class TicketPanel extends JPanel {
     private JLabel lblProjectTitle;
     private JLabel lblSubtitle;
     
-    // Controller
     private TicketController ticketController;
     private ProjectController projectController;
     
-    // Data Project yang sedang dibuka
     private int currentProjectId = -1;
     private String currentProjectName = "";
 
-    // Callback untuk kembali ke halaman project
     private Runnable onBackAction;
 
     public TicketPanel(Runnable onBackAction) {
@@ -43,30 +39,32 @@ public class TicketPanel extends JPanel {
         initComponents();
     }
 
-    // Method ini akan dipanggil dari ProjectListPanel / MainFrame
+    public void setProjectHeader(String name) {
+        this.currentProjectName = name;
+        if (lblProjectTitle != null) {
+            lblProjectTitle.setText(name);
+        }
+    }
+
     public void loadData(int projectId) {
         this.currentProjectId = projectId;
         
-        // 1. Ambil Info Project (untuk Header)
-        // Kita perlu bikin method getProjectById di ProjectController dulu (nanti dicek)
-        // Sementara kita pakai logic simple atau asumsikan nama sudah dikirim
-        // Tapi idealnya ambil fresh dari DB:
+        if (currentProjectName.isEmpty()) {
+            lblProjectTitle.setText("Project ID #" + projectId);
+        } else {
+            lblProjectTitle.setText(currentProjectName);
+        }
+
         try {
-            // Asumsi: Kita tambahkan method getProjectById di Controller nanti
-            // Kalau belum ada, ProjectController perlu update sedikit.
-            // Untuk sekarang kita ambil tiketnya dulu.
             List<Ticket> tickets = ticketController.getTicketsByProject(projectId);
-            
-            // Update Header (Placeholder logic, nanti diperbaiki jika ProjectController sudah ada getById)
-            lblProjectTitle.setText("Project ID #" + projectId); 
             lblSubtitle.setText("Total Tickets: " + tickets.size());
             
-            // 2. Update Tabel
             tableModel.setRowCount(0);
             for (Ticket t : tickets) {
                 Object[] row = {
                     t.getId(),
                     t.getTitle(),
+                    t.getDescription(),
                     (t.getAssignee() != null) ? t.getAssignee().getFullName() : "Unassigned",
                     t.getPriority(),
                     t.getStatus()
@@ -78,19 +76,12 @@ public class TicketPanel extends JPanel {
             e.printStackTrace();
         }
     }
-    
-    // Versi lebih lengkap jika ProjectController sudah support getById
-    public void setProjectHeader(String name) {
-        this.currentProjectName = name;
-        lblProjectTitle.setText(name);
-    }
 
     private void initComponents() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); 
 
-        // KIRI: Tombol Back & Judul Project
         JPanel leftContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftContainer.setOpaque(false);
 
@@ -124,7 +115,6 @@ public class TicketPanel extends JPanel {
         leftContainer.add(btnBack);
         leftContainer.add(textPanel);
 
-        // KANAN: Tombol New Ticket
         JButton btnAdd = new JButton("+ New Ticket");
         btnAdd.setBackground(new Color(79, 70, 229)); 
         btnAdd.setForeground(Color.WHITE);
@@ -140,16 +130,47 @@ public class TicketPanel extends JPanel {
                 return;
             }
             JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            // Kita kirim ID Project ke Form Dialog
             TicketFormDialog dialog = new TicketFormDialog(parentFrame, currentProjectId);
             dialog.setVisible(true);
-            
-            // Refresh tabel setelah dialog tutup
             loadData(currentProjectId);
         });
 
+        JButton btnEdit = new JButton("Edit Ticket");
+        btnEdit.setBackground(Color.WHITE);
+        btnEdit.setForeground(new Color(50, 50, 50));
+        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnEdit.setFocusPainted(false);
+        btnEdit.putClientProperty(FlatClientProperties.STYLE, "arc: 10");
+        btnEdit.setPreferredSize(new Dimension(110, 32));
+        
+        btnEdit.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Select a ticket to edit!");
+                return;
+            }
+            
+            int id = (int) table.getValueAt(selectedRow, 0);
+            String title = (String) table.getValueAt(selectedRow, 1);
+            String desc = (String) table.getValueAt(selectedRow, 2);
+            String assignee = (String) table.getValueAt(selectedRow, 3);
+            String priority = (String) table.getValueAt(selectedRow, 4);
+            String status = (String) table.getValueAt(selectedRow, 5);
+
+            JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            TicketFormDialog dialog = new TicketFormDialog(parentFrame, id, title, desc, priority, status, assignee);
+            dialog.setVisible(true);
+            
+            loadData(currentProjectId); 
+        });
+        
+        JPanel rightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightButtons.setOpaque(false);
+        rightButtons.add(btnEdit);
+        rightButtons.add(btnAdd);
+
         headerPanel.add(leftContainer, BorderLayout.WEST);
-        headerPanel.add(btnAdd, BorderLayout.EAST);
+        headerPanel.add(rightButtons, BorderLayout.EAST);
 
         JPanel tableContainer = createTicketTable();
 
@@ -163,7 +184,7 @@ public class TicketPanel extends JPanel {
         panel.putClientProperty(FlatClientProperties.STYLE, "arc: 15");
         panel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        String[] columns = {"ID", "Ticket Title", "Assignee", "Priority", "Status"};
+        String[] columns = {"ID", "Ticket Title", "Description", "Assignee", "Priority", "Status"};
         
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -180,19 +201,19 @@ public class TicketPanel extends JPanel {
         table.getTableHeader().setForeground(new Color(100, 100, 100));
         table.getTableHeader().setPreferredSize(new Dimension(0, 35));
 
-        // Atur Lebar Kolom
-        table.getColumnModel().getColumn(0).setPreferredWidth(60); 
-        table.getColumnModel().getColumn(0).setMaxWidth(80);
-        table.getColumnModel().getColumn(1).setPreferredWidth(300); 
-        table.getColumnModel().getColumn(2).setPreferredWidth(150); 
-        table.getColumnModel().getColumn(3).setPreferredWidth(100); 
-        table.getColumnModel().getColumn(4).setPreferredWidth(100); 
-
+        table.getColumnModel().getColumn(0).setPreferredWidth(50); 
+        table.getColumnModel().getColumn(0).setMaxWidth(60);
+        table.getColumnModel().getColumn(1).setPreferredWidth(200); 
+        table.getColumnModel().getColumn(2).setPreferredWidth(250); 
+        table.getColumnModel().getColumn(3).setPreferredWidth(120); 
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);  
+        table.getColumnModel().getColumn(5).setPreferredWidth(100); 
+        
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); 
         table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); 
+        table.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); 
         
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());

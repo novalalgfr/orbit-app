@@ -15,7 +15,7 @@ public class DashboardPanel extends JPanel {
     private DashboardController controller;
 
     public DashboardPanel() {
-        this.controller = new DashboardController(); // Init Controller
+        this.controller = new DashboardController();
         
         setLayout(new BorderLayout());
         setBackground(new Color(245, 247, 250)); 
@@ -32,7 +32,6 @@ public class DashboardPanel extends JPanel {
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
         title.setForeground(new Color(33, 33, 33));
         
-        // Ambil nama user yang login
         JLabel subtitle = new JLabel("Welcome back, " + controller.getGreetingName() + "!");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitle.setForeground(Color.GRAY);
@@ -44,7 +43,6 @@ public class DashboardPanel extends JPanel {
         statsContainer.setOpaque(false);
         statsContainer.setPreferredSize(new Dimension(0, 140));
 
-        // Ambil data statistik dari Controller
         String totalProj = String.valueOf(controller.getTotalProjects());
         String myTasks = String.valueOf(controller.getMyTasksCount());
         String pending = String.valueOf(controller.getPendingTasksCount());
@@ -109,7 +107,6 @@ public class DashboardPanel extends JPanel {
 
         String[] cols = {"ID", "Task Name", "Project", "Status", "Assignee"};
         
-        // Ambil Data Tiket Terbaru dari Controller
         List<Ticket> recentTickets = controller.getRecentActivities();
         Object[][] rows = new Object[recentTickets.size()][5];
 

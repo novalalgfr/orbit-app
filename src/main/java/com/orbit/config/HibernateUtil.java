@@ -9,7 +9,6 @@ public class HibernateUtil {
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
             try {
-                // Membaca konfigurasi dari hibernate.cfg.xml
                 Configuration configuration = new Configuration();
                 configuration.configure();
                 

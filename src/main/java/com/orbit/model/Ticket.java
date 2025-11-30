@@ -14,6 +14,9 @@ public class Ticket {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "description")
+    private String description;
+
     @Column(name = "priority")
     private String priority;
 
@@ -30,8 +33,9 @@ public class Ticket {
 
     public Ticket() {}
 
-    public Ticket(String title, String priority, String status, Project project, User assignee) {
+    public Ticket(String title , String description, String priority, String status, Project project, User assignee) {
         this.title = title;
+		this.description = description;
         this.priority = priority;
         this.status = status;
         this.project = project;
@@ -43,6 +47,9 @@ public class Ticket {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+	public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     public String getPriority() { return priority; }
     public void setPriority(String priority) { this.priority = priority; }

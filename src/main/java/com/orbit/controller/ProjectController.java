@@ -33,4 +33,27 @@ public class ProjectController {
             return false;
         }
     }
+
+	public boolean updateProject(int id, String name, String desc, String start, String end) {
+        if (name.isEmpty() || start.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Project Name and Start Date are required!");
+            return false;
+        }
+        try {
+            Project p = projectService.getProjectById(id);
+            if (p != null) {
+                p.setProjectName(name);
+                p.setDescription(desc);
+                p.setStartDate(start);
+                p.setEndDate(end);
+                new com.orbit.dao.ProjectDao().update(p); 
+                
+                JOptionPane.showMessageDialog(null, "Project Updated Successfully!");
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
