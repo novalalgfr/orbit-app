@@ -9,7 +9,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 
 public class ProjectListPanel extends JPanel {
 
-    private JTable table; // Table kita jadikan global variabel agar bisa diakses tombol
+    private JTable table;
 
     public ProjectListPanel() {
         setLayout(new BorderLayout());
@@ -24,7 +24,6 @@ public class ProjectListPanel extends JPanel {
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); 
 
-        // BAGIAN JUDUL (KIRI)
         JPanel textPanel = new JPanel(new GridLayout(2, 1));
         textPanel.setOpaque(false);
         JLabel title = new JLabel("All Projects");
@@ -38,11 +37,9 @@ public class ProjectListPanel extends JPanel {
         textPanel.add(title);
         textPanel.add(subtitle);
 
-        // BAGIAN TOMBOL (KANAN)
         JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonContainer.setOpaque(false);
 
-        // 1. Tombol OPEN (Putih)
         JButton btnOpen = new JButton("Open Project");
         btnOpen.setBackground(Color.WHITE);
         btnOpen.setForeground(new Color(50, 50, 50));
@@ -52,28 +49,21 @@ public class ProjectListPanel extends JPanel {
         btnOpen.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnOpen.setPreferredSize(new Dimension(120, 32));
 
-        // Logic Tombol Open
         btnOpen.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow == -1) {
                 JOptionPane.showMessageDialog(this, "Please select a project first!", "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
-                // Ambil Nama Project dari tabel (Kolom ke-1)
                 String projectName = table.getValueAt(selectedRow, 1).toString();
                 
-                // Cari MainFrame dan ganti layar ke TICKETS
                 Container parent = SwingUtilities.getAncestorOfClass(JPanel.class, this);
                 if (parent != null) {
                     CardLayout cl = (CardLayout) parent.getLayout();
                     cl.show(parent, "TICKETS");
-                    
-                    // Opsional: Tampilkan pesan debug
-                    // System.out.println("Membuka Project: " + projectName);
                 }
             }
         });
 
-        // 2. Tombol NEW (Biru)
         JButton btnAdd = new JButton("+ New Project");
         btnAdd.setBackground(new Color(79, 70, 229)); 
         btnAdd.setForeground(Color.WHITE);
@@ -94,7 +84,6 @@ public class ProjectListPanel extends JPanel {
         headerPanel.add(textPanel, BorderLayout.WEST);
         headerPanel.add(buttonContainer, BorderLayout.EAST);
 
-        // BAGIAN TABEL
         JPanel tableContainer = createProjectTable();
 
         add(headerPanel, BorderLayout.NORTH);
@@ -121,7 +110,7 @@ public class ProjectListPanel extends JPanel {
             }
         };
 
-        table = new JTable(model); // Inisialisasi variabel global table
+        table = new JTable(model);
         table.setRowHeight(40); 
         
         table.setShowVerticalLines(true);

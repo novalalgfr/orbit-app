@@ -1,8 +1,7 @@
 package com.orbit;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import com.orbit.view.MainFrame;
-
+import com.orbit.view.LoginFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -15,7 +14,7 @@ public class Main {
         }
 
         SwingUtilities.invokeLater(() -> {
-            new MainFrame().setVisible(true);
+            new LoginFrame().setVisible(true);
         });
     }
 }
