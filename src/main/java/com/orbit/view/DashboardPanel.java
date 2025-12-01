@@ -113,7 +113,6 @@ public class DashboardPanel extends JPanel {
         for (int i = 0; i < recentTickets.size(); i++) {
             Ticket t = recentTickets.get(i);
             
-            // PERUBAHAN 2: Isi kolom pertama dengan nomor urut (i + 1)
             rows[i][0] = i + 1; 
             
             rows[i][1] = t.getTitle();
@@ -142,7 +141,6 @@ public class DashboardPanel extends JPanel {
         table.getTableHeader().setForeground(new Color(100, 100, 100));
         table.getTableHeader().setPreferredSize(new Dimension(0, 35));
         
-        // Lebar kolom No dikecilkan sedikit
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(0).setMaxWidth(60);
         
